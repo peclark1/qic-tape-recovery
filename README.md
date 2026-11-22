@@ -4,6 +4,8 @@ A reproducible, evidence-preserving workflow for reading aging QIC magnetic tape
 
 **Start here:** [Technical recovery process](docs/RECOVERY_PROCESS.md) — hardware, SCSI drive configuration, raw record capture, error behavior, capture journals, intra-tape and cross-tape reconstruction, validation, and case studies.
 
+**Second-drive comparison:** The guide now documents the Tandberg TDC 3660 / TDC 3600-family fixed-512-byte tests and includes [the corresponding firmware analysis](docs/TDC3660_ROM_ANALYSIS.md).
+
 ## What this project is
 
 The aim is to preserve **what the drive actually returned**, including incomplete and questionable reads, then construct separately identified recovery candidates supported by the original capture evidence. We do not silently replace damaged data with zeros or claim that a complete-looking tape image is a verified restore.
