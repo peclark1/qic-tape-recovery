@@ -12,7 +12,7 @@ The principal tested setup uses a Tandberg TDC 4100, Linux generic SCSI, a 32 Ki
 
 ## Current status
 
-Documentation is the first deliverable. The working capture scripts, capture inventories, reconstruction manifests, synthetic test fixtures, and repeatable validation tools should be added in subsequent reviewed commits. **No original IBM tape images, customer data, or sensitive archive contents are included here.**
+The detailed process is documented, and the tested **TDC 4100 direct-SG capture script** is available at [scripts/tape2tap-sg.py](scripts/tape2tap-sg.py). Archive inventories, reconstruction manifests, synthetic test fixtures, and repeatable validation tools remain planned additions. **No original IBM tape images, customer data, or sensitive archive contents are included here.**
 
 Please distinguish preservation milestones:
 
