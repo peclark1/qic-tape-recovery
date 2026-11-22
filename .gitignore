@@ -1,0 +1,33 @@
+# Physical media images and archived/reconstructed tape payloads
+*.tap
+*.aws
+*.e11
+*.hda
+*.img
+*.bin
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.zst
+
+# Per-capture logs, media data and sensitive acquisition sidecars
+capture.jsonl
+capture.events.jsonl
+read-*.bin
+*.sense.bin
+
+# Python/local development
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.swp
+*~
+
+# Local capture directories are not checked in.
+tape-archives/
+captures/
+private-archives/
+
+# Future synthetic test data should use explicitly chosen, small .fixture files.
