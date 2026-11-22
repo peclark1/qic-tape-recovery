@@ -130,7 +130,7 @@ This is especially useful because the block-size limitation is **present in the 
 - READ opcode **`08`** dispatches through handler **`$72F6`**; MODE SELECT `15` through **`$6D21`**, MODE SENSE `1A` through **`$70CB`**, and REQUEST SENSE `03` through **`$7405`**.
 - The ROM has command-bit validation tables, and unsupported/disallowed command-bit combinations follow an error path. That fits the rejected 32 KiB variable READ but does **not**, without deeper tracing, prove which exact check generated the live `24/00` sense.
 
-This is a **static analysis of that exact ROM**, not a fully verified disassembly of all drive logic or proof of the firmware in an IBM-branded unit. The relevant family reference is [Tandberg Data, *TDC 3620/3640/3660 Reference Manual*](https://bitsavers.org/pdf/tandbergData/TDC_3620_3640_3660_Reference_Manual.pdf). Our saved `tdc3660_rom_analysis.md` is the detailed research record; the ROM and reconstructed firmware bytes are not distributed here.
+This is a **static analysis of that exact ROM**, not a fully verified disassembly of all drive logic or proof of the firmware in an IBM-branded unit. The relevant family reference is [Tandberg Data, *TDC 3620/3640/3660 Reference Manual*](https://bitsavers.org/pdf/tandbergData/TDC_3620_3640_3660_Reference_Manual.pdf). The [full TDC 3660 ROM analysis](TDC3660_ROM_ANALYSIS.md) preserves the command-dispatch evidence, exact ROM offsets, mode-page findings and unresolved questions. The ROM bytes themselves are not distributed here.
 
 ### Earlier TDC 3600 / IBM-drive observations (separate sessions)
 
