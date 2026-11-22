@@ -71,7 +71,78 @@ An independent comparison using **tapecopy** was particularly informative:
 
 The meaningful constraint was the **requested maximum transfer size**, not evidence that every original tape record is exactly 32 KiB. Actual record sizes vary: IBM labels are typically **80 bytes**, while payload records can be much larger. A smaller read buffer can also interact with device behavior at damaged records. We therefore record the **returned length** of every read and independently reconstruct original IBM block boundaries.
 
-The **TDC 3660** behaved differently in later testing: its 32 KiB variable READ was rejected (ILLEGAL REQUEST, ASC/ASCQ 24/00), while fixed 512-byte handling worked. Therefore these instructions are a documented **TDC 4100 profile**, not a universal compatibility setting.
+The **TDC 3660 / TDC 3600-family comparison drive** behaved differently: it rejected a 32 KiB variable READ and successfully completed a fixed 512-byte READ. See [Section 2A](#2a-comparison-testing-tandberg-tdc-3660--tdc-3600-family) for the command bytes, SCSI sense, original IBM VOL1-label result, firmware analysis and distinctions between revisions. These instructions are a **TDC 4100 profile**, not a universal compatibility setting.
+
+## 2A. Comparison testing: Tandberg TDC 3660 / TDC 3600 family
+
+**Test date: November 21, 2026.** We tested a second Tandberg drive to determine whether it could recover material that the TDC 4100 found difficult, and whether we could reuse the same direct-SCSI reader. The physical drive was identified by its owner as a **TDC 3660**, but its SCSI standard INQUIRY identified it as **`TANDBERG` / `TDC 3600`**, with revision shown as **`=08:`** in its ROM (some diagnostic display abbreviated this to `=08`). This is an important distinction: the INQUIRY string identifies the *firmware family*, not necessarily the 3620/3640/3660 mechanical variant. At the time of this test the generic SCSI device was **`/dev/sg1`**; this was a different session from the TDC 4100 `/dev/sg1` tests, so never use the path as a permanent drive identifier.
+
+### Commands and observed results
+
+| Test | Request / evidence | Result |
+|---|---|---|
+| SCSI INQUIRY | Live drive identification | `TANDBERG TDC 3600`; revision family `=08`; owner identifies physical model as TDC 3660. |
+| READ BLOCK LIMITS | Six-byte reply `00 00 02 00 02 00` (also verified in the companion ROM) | **Maximum 512 bytes; minimum 512 bytes.** |
+| MODE SENSE / block descriptor | Current block length | **512 bytes.** |
+| Reuse the TDC 4100 reader's variable-length READ(6) | CDB `08 02 00 80 00 00` (SILI / 32,768-byte request) | **CHECK CONDITION**, SCSI status `02`; sense key `05` (**ILLEGAL REQUEST**), ASC/ASCQ `24/00` (**invalid field in CDB**). No useful 32 KiB record was obtained this way. |
+| Fixed-block READ(6) | CDB `08 01 00 00 01 00` (**FIXED=1**, transfer length 1 block) | **Succeeded**, returned one **512-byte** block. |
+| Inspect returned bytes | Decode appropriate bytes as EBCDIC | Began with an IBM volume label **`VOL1 G1749`**, corroborating that the drive can physically read at least some of the inserted cartridge. |
+
+The 512-byte result is **not** proof of a successful full-tape capture, nor proof that all variable-sized logical records can be reconstructed on this drive. It confirms successful media access and a valid initial IBM label through fixed-block SCSI commands. Rewinding and further tape-motion testing followed, but this set of results does **not** document a complete 3660 image or its end-of-data/filemark handling.
+
+### Why the TDC 4100 script cannot simply be reused
+
+The TDC 4100 workflow asks for a **maximum 32,768-byte variable-length tape record** in one READ(6). The 3660-family device under test advertises and enforces a **single fixed 512-byte block length**, and explicitly rejected that command. Merely reducing the SG_IO buffer to 512 bytes while leaving the **READ(6) FIXED/SILI flag and CDB transfer-length interpretation unchanged** is not sufficient: the command semantics must change as well.
+
+For the successful test, the CDB was:
+
+~~~text
+08 01 00 00 01 00
+│  │  └────────── 1 fixed block
+│  └───────────── FIXED=1
+└──────────────── READ(6)
+~~~
+
+This means that a future capture utility for this drive should:
+
+- issue and interpret **fixed 512-byte reads** rather than the TDC 4100's variable-record command;
+- preserve the raw 512-byte sequence and every filemark, error and sense result;
+- use *IBM logical label and block structure* to determine whether/how the 512-byte physical units correspond to longer records seen through another drive;
+- **not** combine 512-byte reads into larger IBM records without alignment and expected-length evidence;
+- test filemark/end/error handling and the consequences of a failed fixed-block read before advertising the drive as a recovery alternative.
+
+It would be incorrect to conclude from these tests alone that the drive is unusable, that the cartridge is incompatible, or that the 4100's error-recovery semantics apply to the 3660. We showed that the **capture command was incompatible**, not that the tape was unreadable.
+
+### Independent firmware evidence: 3660 ROM analysis
+
+We also inspected a **65,536-byte TDC 3660-family firmware image** named `tdc3660-rom.BIN`. Its SHA-256 is:
+
+~~~text
+94db7bead17538a87b6f1b300b3111cb6ff0ec280cd4ad0de8a1453582b44fae
+~~~
+
+The ROM has a Motorola **68HC11-family** reset vector pointing to address **`$5051`**. At `$5000`, it contains the identification `(C) TANDBERG DATA 1987SCSI`. Its SCSI INQUIRY buffer begins at `$501A`, identifies **`TDC 3600`** and carries revision **`=08:`**. The visible vendor string includes `15CREATED011593`; a date interpretation is plausible but *not verified*.
+
+This is especially useful because the block-size limitation is **present in the firmware itself**:
+
+- READ BLOCK LIMITS handler at **`$7335`** returns literal bytes from **`$733E`**: `00 00 02 00 02 00` (**512-byte minimum and maximum**).
+- MODE SENSE handler at **`$70CB`** builds its response, and code at **`$71B1`** places **`$0200` (512)** into the block descriptor.
+- READ opcode **`08`** dispatches through handler **`$72F6`**; MODE SELECT `15` through **`$6D21`**, MODE SENSE `1A` through **`$70CB`**, and REQUEST SENSE `03` through **`$7405`**.
+- The ROM has command-bit validation tables, and unsupported/disallowed command-bit combinations follow an error path. That fits the rejected 32 KiB variable READ but does **not**, without deeper tracing, prove which exact check generated the live `24/00` sense.
+
+This is a **static analysis of that exact ROM**, not a fully verified disassembly of all drive logic or proof of the firmware in an IBM-branded unit. The relevant family reference is [Tandberg Data, *TDC 3620/3640/3660 Reference Manual*](https://bitsavers.org/pdf/tandbergData/TDC_3620_3640_3660_Reference_Manual.pdf). Our saved `tdc3660_rom_analysis.md` is the detailed research record; the ROM and reconstructed firmware bytes are not distributed here.
+
+### Earlier TDC 3600 / IBM-drive observations (separate sessions)
+
+We also examined an earlier IBM-associated **TDC 3600** family drive reported as `TANDBERG TDC 360092X4180`, firmware **`I04:`**. On October 26 and November 4–7, that unit was seen with a **512-byte current block setting**, density **`0x0F` (QIC-120)**, and attempts to select variable block mode using `mt setblk 0` were unsuccessful. A block-limits observation for that earlier firmware was reported as **1–32,768 bytes**, unlike the **512–512** observed/ROM-verified on the `=08:` unit. The earlier device's tests also involved ZuluSCSI device-personality comparison and cannot be treated as an interchangeable firmware baseline.
+
+**Do not collapse these two firmware identities into “the TDC 3600.”** Variant, OEM customization, firmware revision, reported block limits and requested tape mode all matter. The earlier `I04:` report and the `=08:` drive should retain separate hardware profiles until their physical identities and response traces are independently matched.
+
+### Outcome and recommended project treatment
+
+**Outcome:** The 3660-family drive could read an initial 512-byte IBM tape block but **did not support our tested TDC 4100 variable-length 32 KiB acquisition method**. Its ROM independently corroborates fixed 512-byte limits. We should retain this as a **successful proof of basic media access**, **negative compatibility test for the 4100 reader**, and a **candidate for a separate fixed-block acquisition path**—not as a completed backup or a confirmed replacement for the TDC 4100.
+
+For future comparison, record drive serial/physical label, INQUIRY byte dump, firmware, READ BLOCK LIMITS, MODE SENSE, density, cartridge identity, precise status/sense and whether any commands caused repositioning. The strongest next experiment is a bounded, read-only fixed-block capture on a known tape with independently readable contents, followed by byte/label/filemark comparison against the TDC 4100 acquisition.
 
 ## 3. Preparing the TDC 4100 for the current capture workflow
 
