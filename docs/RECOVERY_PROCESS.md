@@ -360,6 +360,12 @@ A **third read pass** of 1988 volume 1 later reached the observed end-of-data wi
 
 These are **dated stages**, not contradictory final success counts. A later D04-style merged candidate and subsequent analysis must retain its own input hashes, algorithm and residual-error ledger. We have not claimed a fully error-free 1988 SAVSYS based solely on the pass-3 totals.
 
+### Concrete example: 1988 SAVSYS volume 2
+
+The 1988 volume-2 acquisition returned **4,237 good-status reads, 22 medium-error returns, and 138 filemarks**. The IBM-level check identified **46 labeled logical files** with matching EOF1 trailer block counts.
+
+A separate **SAV88-V2-D01** candidate rejoined **21 split original records** using the observed fragments, preserved all **138 filemarks** and the end-of-data marker, and **left 22 uncertain records identified as uncertain**. No original payload bytes were changed merely to force the expected sizes. This illustrates why reconstructing the record boundaries and resolving their bytes are two separate tasks: the TAP structure can be repaired while specific payloads still require more evidence.
+
 ## 8. Comparing independent physical tapes
 
 A second, physically different cartridge may contain the *same file identifier* or much of the same logical data. This can be a powerful source of independent corroboration, but is not a license to transplant every byte.
@@ -389,6 +395,10 @@ The October 1988 set also includes an external-label discrepancy on volume 2 (**
 6. When one target region is unreadable, label a donor block as **borrowed from a different recording**; never call it an original read of the target.
 7. If two independent donors agree in a region where the target is absent, preserve that as stronger corroboration, but still state that target identity is inferred.
 8. Store all conflicts, lengths, offsets, donor versions and hashes in a manifest; recompute validation after insertion.
+
+### Cross-tape corroboration outside A01
+
+The 1988 volume-1 third-pass work also recovered or independently corroborated **nine QSYS logical records**. Comparison with 1994-associated evidence was used to check those candidate repairs byte-for-byte. This is a valuable illustration of using a later tape as *independent corroboration*, while recording which bytes were actually read from 1988 and which comparisons came from a different recording.
 
 ### Concrete A01 comparison
 
