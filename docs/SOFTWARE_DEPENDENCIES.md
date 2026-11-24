@@ -4,7 +4,7 @@ The project uses standalone utilities from Hercules, Linux tape/SCSI tools, proj
 
 ## Hercules tapecopy
 
-The original workflow used Ubuntu's packaged Hercules 3.13 (`sudo apt install hercules`) to obtain `tapecopy`. Earlier archives produced by a collaborator used this utility with a Linux SCSI tape device and AWS output. Typical commands (verify the actual device first):
+The original workflow used Ubuntu's packaged Hercules 3.13 (`sudo apt install hercules`) to obtain `tapecopy`. Earlier acquisitions used this utility with a Linux SCSI tape device and AWS output. Typical commands (verify the actual device first):
 
 ```sh
 sudo tapecopy /dev/nst0 capture.aws
