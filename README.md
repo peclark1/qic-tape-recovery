@@ -27,9 +27,13 @@ The aim is to preserve **what the drive actually returned**, including incomplet
 
 The principal tested setup uses a Tandberg TDC 4100, Linux generic SCSI, a 32 KiB variable-length READ(6) request, and per-read metadata. Earlier Linux tape-device, fixed-block, and `tapecopy` experiments informed this approach.
 
+## Offline recovery toolkit
+
+[Usage and limitations](docs/RECOVERY_TOOLKIT.md) — Python 3.11+ capture validation, IBM label inventory, anchored same-tape/cross-tape comparison, conservative derivative reconstruction, a versioned manifest schema and synthetic regression tests. This is an initial implementation; fragment joining and gap recovery remain research work.
+
 ## Current status
 
-The detailed process is documented, and the tested **TDC 4100 direct-SG capture script** is available at [scripts/tape2tap-sg.py](scripts/tape2tap-sg.py). Archive inventories, reconstruction manifests, synthetic test fixtures, and repeatable validation tools remain planned additions. **No original IBM tape images, customer data, or sensitive archive contents are included here.**
+The detailed process is documented, and the tested **TDC 4100 direct-SG capture script** is available at [scripts/tape2tap-sg.py](scripts/tape2tap-sg.py). Initial offline validation, inventory, comparison, reconstruction manifests and synthetic tests are now available; full fragment reconciliation and archive-specific validation remain planned. **No original IBM tape images, customer data, or sensitive archive contents are included here.**
 
 Please distinguish preservation milestones:
 
