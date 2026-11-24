@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QIC conservative reconstruction manifest v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "relationship",
+    "base_sha256",
+    "donor_sha256",
+    "output_sha256",
+    "changes",
+    "remaining_error_flags",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "relationship": {
+      "const": "operator-asserted same physical tape"
+    },
+    "base_sha256": {
+      "$ref": "#/$defs/hash"
+    },
+    "donor_sha256": {
+      "$ref": "#/$defs/hash"
+    },
+    "output_sha256": {
+      "$ref": "#/$defs/hash"
+    },
+    "remaining_error_flags": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "limitations": {
+      "type": "string"
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "target",
+          "source",
+          "anchors",
+          "classification"
+        ],
+        "properties": {
+          "file": {
+            "type": "array",
+            "minItems": 5,
+            "maxItems": 5,
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "target": {
+            "$ref": "#/$defs/record"
+          },
+          "source": {
+            "$ref": "#/$defs/record"
+          },
+          "anchors": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "$ref": "#/$defs/hash"
+            }
+          },
+          "classification": {
+            "const": "candidate"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "record": {
+      "type": "object",
+      "required": [
+        "offset",
+        "length",
+        "sha256",
+        "suspect"
+      ],
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32768
+        },
+        "sha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "suspect": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

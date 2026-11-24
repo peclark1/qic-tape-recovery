@@ -7,7 +7,7 @@
 
 > **Scope and honesty:** This guide records the actual TDC 4100 experiments and the recovery work through November 22. It is not a specification for every QIC drive or every AS/400 tape. Figures are identified as *observed*, *derived*, or *still unresolved*. The original archives and detailed journals are retained separately; their data is not distributed by this public repository.
 
-## 1. What we are trying to preserve
+## 1. Preservation goals
 
 A tape archive has several different layers, which must not be confused:
 
@@ -20,7 +20,7 @@ A tape archive has several different layers, which must not be confused:
 
 **An image ending in an end-of-data marker is not, by itself, a complete or accurate backup.** A drive can return the end marker while earlier records remain corrupt, truncated or missing.
 
-Our preservation rule is to keep the raw acquisition artifacts **immutable**. Every repair produces a separate derivative, accompanied by a manifest recording its inputs, the exact bytes selected and the remaining uncertainty.
+The preservation rule used in this effort is to keep the raw acquisition artifacts **immutable**. Every repair produces a separate derivative, accompanied by a manifest recording its inputs, the exact bytes selected and the remaining uncertainty.
 
 ### Workflow at a glance
 
@@ -40,11 +40,11 @@ Photograph/inventory cartridge and inspect physical condition
   -> Test read/restore/install on emulator or physical AS/400
 ~~~
 
-## 2. Hardware and why we chose this approach
+## 2. Hardware and rationale for the acquisition approach
 
 The primary working reader was a **Tandberg TDC 4100**, firmware **0801**, attached by SCSI to an Ubuntu Linux acquisition host. The host presented the same transport as the Linux non-rewinding sequential tape device **/dev/nst0** and generic SCSI device **/dev/sg1** during these sessions. Earlier AS/400 work also involved an IBM-labeled Tandberg TDC 3600 and a TDC 3660; do **not** assume their SCSI behavior matches the 4100.
 
-The archive setup used a legacy Adaptec SCSI host adapter in our Ubuntu work (AHA-2940AU in the earlier setup); record the exact controller and driver for each new installation rather than assuming these device paths are permanent.
+The archive setup used a legacy Adaptec SCSI host adapter in the Ubuntu recovery environment (AHA-2940AU in the earlier setup); record the exact controller and driver for each new installation rather than assuming these device paths are permanent.
 
 Before mounting a fragile cartridge, inspect its condition and replace a degraded tension band when necessary. Record all interventions (including rebanding), along with photographs, label discrepancies, and whether the write-protect mechanism was engaged. Do not perform unnecessary repeat transports on a visibly deteriorating tape.
 
@@ -67,7 +67,7 @@ An independent comparison using **tapecopy** was particularly informative:
 - Stock tapecopy used a roughly **2 MiB** tape READ request and immediately failed with **EINVAL**.
 - A **64 KiB** request also failed.
 - A **32 KiB (32,768 byte)** request worked.
-- A tapecopy build modified to use 32 KiB could read the original variable-record structure, including early MULIC data, and we were able to write/read a replacement tape for comparison.
+- A tapecopy build modified to use 32 KiB could read the original variable-record structure, including early MULIC data, and a replacement tape was successfully written and read for comparison.
 
 The meaningful constraint was the **requested maximum transfer size**, not evidence that every original tape record is exactly 32 KiB. Actual record sizes vary: IBM labels are typically **80 bytes**, while payload records can be much larger. A smaller read buffer can also interact with device behavior at damaged records. We therefore record the **returned length** of every read and independently reconstruct original IBM block boundaries.
 
@@ -75,7 +75,7 @@ The **TDC 3660 / TDC 3600-family comparison drive** behaved differently: it reje
 
 ## 2A. Comparison testing: Tandberg TDC 3660 / TDC 3600 family
 
-**Test date: November 21, 2026.** We tested a second Tandberg drive to determine whether it could recover material that the TDC 4100 found difficult, and whether we could reuse the same direct-SCSI reader. The physical drive was identified by its owner as a **TDC 3660**, but its SCSI standard INQUIRY identified it as **`TANDBERG` / `TDC 3600`**, with revision shown as **`=08:`** in its ROM (some diagnostic display abbreviated this to `=08`). This is an important distinction: the INQUIRY string identifies the *firmware family*, not necessarily the 3620/3640/3660 mechanical variant. At the time of this test the generic SCSI device was **`/dev/sg1`**; this was a different session from the TDC 4100 `/dev/sg1` tests, so never use the path as a permanent drive identifier.
+**Test date: November 21, 2026.** A second Tandberg drive was tested to determine whether it could recover material that the TDC 4100 found difficult and whether the same direct-SCSI reader could be reused. The physical drive was identified by its owner as a **TDC 3660**, but its SCSI standard INQUIRY identified it as **`TANDBERG` / `TDC 3600`**, with revision shown as **`=08:`** in its ROM (some diagnostic display abbreviated this to `=08`). This is an important distinction: the INQUIRY string identifies the *firmware family*, not necessarily the 3620/3640/3660 mechanical variant. At the time of this test the generic SCSI device was **`/dev/sg1`**; this was a different session from the TDC 4100 `/dev/sg1` tests, so never use the path as a permanent drive identifier.
 
 ### Commands and observed results
 
@@ -111,11 +111,11 @@ This means that a future capture utility for this drive should:
 - **not** combine 512-byte reads into larger IBM records without alignment and expected-length evidence;
 - test filemark/end/error handling and the consequences of a failed fixed-block read before advertising the drive as a recovery alternative.
 
-It would be incorrect to conclude from these tests alone that the drive is unusable, that the cartridge is incompatible, or that the 4100's error-recovery semantics apply to the 3660. We showed that the **capture command was incompatible**, not that the tape was unreadable.
+It would be incorrect to conclude from these tests alone that the drive is unusable, that the cartridge is incompatible, or that the 4100's error-recovery semantics apply to the 3660. The tests showed that the **capture command was incompatible**, not that the tape was unreadable.
 
 ### Independent firmware evidence: 3660 ROM analysis
 
-We also inspected a **65,536-byte TDC 3660-family firmware image** named `tdc3660-rom.BIN`. Its SHA-256 is:
+The investigation also included a **65,536-byte TDC 3660-family firmware image** named `tdc3660-rom.BIN`. Its SHA-256 is:
 
 ~~~text
 94db7bead17538a87b6f1b300b3111cb6ff0ec280cd4ad0de8a1453582b44fae
@@ -134,19 +134,19 @@ This is a **static analysis of that exact ROM**, not a fully verified disassembl
 
 ### Earlier TDC 3600 / IBM-drive observations (separate sessions)
 
-We also examined an earlier IBM-associated **TDC 3600** family drive reported as `TANDBERG TDC 360092X4180`, firmware **`I04:`**. On October 26 and November 4–7, that unit was seen with a **512-byte current block setting**, density **`0x0F` (QIC-120)**, and attempts to select variable block mode using `mt setblk 0` were unsuccessful. A block-limits observation for that earlier firmware was reported as **1–32,768 bytes**, unlike the **512–512** observed/ROM-verified on the `=08:` unit. The earlier device's tests also involved ZuluSCSI device-personality comparison and cannot be treated as an interchangeable firmware baseline.
+Earlier tests examined an IBM-associated **TDC 3600** family drive reported as `TANDBERG TDC 360092X4180`, firmware **`I04:`**. On October 26 and November 4–7, that unit was seen with a **512-byte current block setting**, density **`0x0F` (QIC-120)**, and attempts to select variable block mode using `mt setblk 0` were unsuccessful. A block-limits observation for that earlier firmware was reported as **1–32,768 bytes**, unlike the **512–512** observed/ROM-verified on the `=08:` unit. The earlier device's tests also involved ZuluSCSI device-personality comparison and cannot be treated as an interchangeable firmware baseline.
 
 **Do not collapse these two firmware identities into “the TDC 3600.”** Variant, OEM customization, firmware revision, reported block limits and requested tape mode all matter. The earlier `I04:` report and the `=08:` drive should retain separate hardware profiles until their physical identities and response traces are independently matched.
 
 ### Outcome and recommended project treatment
 
-**Outcome:** The 3660-family drive could read an initial 512-byte IBM tape block but **did not support our tested TDC 4100 variable-length 32 KiB acquisition method**. Its ROM independently corroborates fixed 512-byte limits. We should retain this as a **successful proof of basic media access**, **negative compatibility test for the 4100 reader**, and a **candidate for a separate fixed-block acquisition path**—not as a completed backup or a confirmed replacement for the TDC 4100.
+**Outcome:** The 3660-family drive could read an initial 512-byte IBM tape block but **did not support the tested TDC 4100 variable-length 32 KiB acquisition method**. Its ROM independently corroborates fixed 512-byte limits. This result is best understood as a **successful proof of basic media access**, **negative compatibility test for the 4100 reader**, and a **candidate for a separate fixed-block acquisition path**—not as a completed backup or a confirmed replacement for the TDC 4100.
 
 For future comparison, record drive serial/physical label, INQUIRY byte dump, firmware, READ BLOCK LIMITS, MODE SENSE, density, cartridge identity, precise status/sense and whether any commands caused repositioning. The strongest next experiment is a bounded, read-only fixed-block capture on a known tape with independently readable contents, followed by byte/label/filemark comparison against the TDC 4100 acquisition.
 
 ## 3. Preparing the TDC 4100 for the current capture workflow
 
-Our earlier tools operated through the standard **/dev/nst0** stream interface and used file-spacing recovery. That approach is useful for healthy tapes but loses useful information when a drive returns CHECK CONDITION with partial payload, because a normal read often surfaces only an I/O error.
+Earlier acquisition tools operated through the standard **/dev/nst0** stream interface and used file-spacing recovery. That approach is useful for healthy tapes but loses useful information when a drive returns CHECK CONDITION with partial payload, because a normal read often surfaces only an I/O error.
 
 The later tool uses Linux **SG_IO** on **/dev/sg1** and explicitly receives status, sense and residual. It records suspect payloads rather than simply throwing them away.
 
@@ -178,7 +178,7 @@ The more conservative historical direct-SG reader did **not** send MODE SELECT a
 
 ### Capture from the start of the tape
 
-A representative command from our actual runs:
+A representative command from the original acquisition runs:
 
 ~~~bash
 output="$HOME/tape-archives/SAVSYS-102388-1-of-2-sg-pass3-1retry"
@@ -277,7 +277,7 @@ The current capture permits a bounded continuation after nonempty medium-error r
 
 The SCSI drive firmware is responsible for its own error-correction and recovery attempts. Depending on its retry setting, it may perform repeated tape-motion/read attempts before returning a status. We observed delays and repeated activity around difficult locations; **we did not instrument the transport motor or prove the number/direction of every physical motion**.
 
-More importantly, a failed READ can **advance the drive**. The next READ may return another piece of what was originally a single tape record. We have seen patterns resembling:
+More importantly, a failed READ can **advance the drive**. The next READ may return another piece of what was originally a single tape record. Observed patterns included sequences resembling:
 
 ~~~text
 original recorded block
@@ -289,7 +289,7 @@ one pass:
   subsequent READ                -> next material C
 ~~~
 
-This illustration is conceptual. We have not automatically proved that any neighboring A/B/C fragments share the same original record. Doing so requires independent alignment evidence from labels, expected block sizes, matching sequences and/or other passes.
+This illustration is conceptual. The illustration does not establish that any neighboring A/B/C fragments share the same original record. Doing so requires independent alignment evidence from labels, expected block sizes, matching sequences and/or other passes.
 
 **The central trap:** a GOOD status after an error can be a **cleanly delivered fragment**, not proof of a whole original record. Equating *one successful SG read* to *one original IBM tape data block* can shift every later record index and make an otherwise plausible recovery wrong.
 
@@ -361,7 +361,7 @@ A read count is **not yet** a logical record count. Preserve zero-byte errors an
 
 ### Step B — parse IBM tape labels and map the logical files
 
-AS/400 save tapes in our set use 80-byte EBCDIC labels. Relevant record identifiers include **VOL1**, **HDR1**, **HDR2**, **EOF1**, **EOF2**, **EOV1** and **EOV2**. Decode only appropriate 80-byte label records (our initial inspection used EBCDIC **CP037**) and retain the undecoded original bytes.
+AS/400 save tapes in this collection use 80-byte EBCDIC labels. Relevant record identifiers include **VOL1**, **HDR1**, **HDR2**, **EOF1**, **EOF2**, **EOV1** and **EOV2**. Decode only appropriate 80-byte label records (the initial inspection used EBCDIC **CP037**) and retain the undecoded original bytes.
 
 Build an IBM-level map containing:
 
@@ -371,7 +371,7 @@ Build an IBM-level map containing:
 - declared block counts from closing labels;
 - whether a file continues onto another volume.
 
-Examples from the 1988 set include **QFILEIML**, **QFILEMCD**, **QSYS**, and **QSS1.L2924.A01**. On our SAVSYS volumes, the low-level structure contains **multiple tape filemarks around one logical IBM file**. For example, 1988 volume 2 showed **46 IBM files and 138 filemarks**; do not treat those as 138 different IBM save files.
+Examples from the 1988 set include **QFILEIML**, **QFILEMCD**, **QSYS**, and **QSS1.L2924.A01**. On the examined SAVSYS volumes, the low-level structure contains **multiple tape filemarks around one logical IBM file**. For example, 1988 volume 2 showed **46 IBM files and 138 filemarks**; do not treat those as 138 different IBM save files.
 
 Use **trailer-declared block counts** to detect missing or extra logical records. An exact count is a useful structural constraint but cannot itself prove the recovered bytes are correct.
 
@@ -429,7 +429,7 @@ Thus **122 logical blocks remained flagged** in D02 (21 + 3 + 98), even though t
 
 A **third read pass** of 1988 volume 1 later reached the observed end-of-data with **5,451 good-status reads, 159 suspect reads and 24 filemarks**. Cross-pass analysis reduced the previously unresolved population from **122 to 90** logical records; **32 acquired clean support** (QFILEIML 1, QFILEMCD 8, QSYS 9, A01 14). Good-status **read count** and IBM logical **block count** are not interchangeable: the former can include pieces of a damaged original block.
 
-These are **dated stages**, not contradictory final success counts. A later D04-style merged candidate and subsequent analysis must retain its own input hashes, algorithm and residual-error ledger. We have not claimed a fully error-free 1988 SAVSYS based solely on the pass-3 totals.
+These are **dated stages**, not contradictory final success counts. A later D04-style merged candidate and subsequent analysis must retain its own input hashes, algorithm and residual-error ledger. The pass-3 totals alone do not establish a fully error-free 1988 SAVSYS.
 
 ### Concrete example: 1988 SAVSYS volume 2
 
@@ -447,7 +447,7 @@ A second, physically different cartridge may contain the *same file identifier* 
 
 **Different tape, possibly different date/release:** the same IBM filename can hold substantially similar material but may contain legitimate different content, metadata or patches. Comparison must identify which spans are **stable and identical**, which genuinely differ, and whether donor bytes could represent the target's original content at all.
 
-Our SAVSYS collections are particularly useful for this:
+The SAVSYS collections examined in this effort provide useful examples:
 
 - **1988 SAVSYS**, two volumes, internally dated **88297**, first volume sequence 0001.
 - **1989 SAVSYS**, two volumes, used to compare repeated data and volume continuations.
@@ -473,7 +473,7 @@ The 1988 volume-1 third-pass work also recovered or independently corroborated *
 
 ### Concrete A01 comparison
 
-In our aligned comparison, an overlapping 1988/1994 region of **QSS1.L2924.A01** matched at approximately **99.7368% of bytes**. That is strong evidence of a common underlying structure but also concrete evidence that the files are **not wholly identical**.
+In the aligned comparison, an overlapping 1988/1994 region of **QSS1.L2924.A01** matched at approximately **99.7368% of bytes**. That is strong evidence of a common underlying structure but also concrete evidence that the files are **not wholly identical**.
 
 An experimental 1994 A01 candidate comprised **32,317,440 bytes placed**, of which **26,841,600 bytes were authentic 1994 evidence** and **5,475,840 bytes were supplied from the 1988 recording**. A further **2,899,968-byte join gap** remained outside the placed candidate. The placed material had **zero conflicts among the selected good target reads**. This is a **research reconstruction**, not a claim that every original 1994 byte was recovered.
 
@@ -505,7 +505,7 @@ Levels 5–6 must be marked **borrowed**, not **physically recovered from the ta
 | **COBOL/400 R02M00** | Earlier stream attempts repeatedly stopped around file 25; direct SG diagnostics obtained a **7,168-byte suspect fragment** and a following **13,736-byte good fragment**, plus later continuation and tail reads | A targeted continuation can rescue downstream files, but discontinuities and acquisition order must be verified before declaring a full reconstruction. |
 | **RPG/400 R02M00** | Stream capture reported **138 tape files, 2,241 records, ~21.90 MiB payload** | A reported successful capture is a useful baseline, not a substitute for independent IBM file and install validation. |
 
-**Real AS/400 testing:** We attempted to use a reconstructed 1988 SAVSYS image on physical B10 hardware. The machine progressed into save/LIC activity, but a later run reached SRC **B68D 6142** during the broader tape sequence. That observation demonstrates substantive progress through the image, **not a verified end-to-end successful restore**. Preserve emulator logs and physical hardware SRCs alongside the exact image hash tested.
+**Real AS/400 testing:** A functional test attempted to use a reconstructed 1988 SAVSYS image on physical B10 hardware. The machine progressed into save/LIC activity, but a later run reached SRC **B68D 6142** during the broader tape sequence. That observation demonstrates substantive progress through the image, **not a verified end-to-end successful restore**. Preserve emulator logs and physical hardware SRCs alongside the exact image hash tested.
 
 ## 10. Targeted rereads without losing context
 
@@ -522,11 +522,11 @@ Never assume that **/dev/nst0 mt status** accurately represents the current loca
 
 Earlier recovery code used **mt rewind / fsf / bsfm** to attempt recovery from a failed file. On old QIC hardware, those commands can fail or move unexpectedly; verify the boundary by identifying real labels after the move. If it cannot be verified, mark the resulting segment as having **unknown initial alignment**.
 
-For the COBOL tape we preserved separately numbered probe and continuation batches, then the tail from file 29. Those batches must be joined according to actual read logs and physical moves, **not alphabetically by their temporary directory names or timestamps**.
+For the COBOL tape the recovery effort preserved separately numbered probe and continuation batches, then the tail from file 29. Those batches must be joined according to actual read logs and physical moves, **not alphabetically by their temporary directory names or timestamps**.
 
 A useful future enhancement is a targeted-reread planning file containing unresolved ranges, suggested safe anchors, history of attempts and remaining uncertainty. The raw acquisition must remain immutable.
 
-## 11. How to tell when we are finished
+## 11. Assessing recovery completeness
 
 Use a **multi-stage status**, not a single “recovered” boolean:
 
@@ -543,9 +543,9 @@ A successfully mounted image might pass stage 2 or 3 and fail 4–6. An install 
 
 For the 1988/1989/1994 sets, no single “100% recovered” claim follows from the results documented here. Unresolved original blocks and/or volume transitions remain.
 
-## 12. Making the work reproducible for the team
+## 12. Preserving the methodology for future recovery efforts
 
-We should publish, as non-proprietary materials:
+The following non-proprietary materials help preserve and communicate the methodology so that other researchers and archivists can evaluate, reproduce, or adapt it. This list records the original publication goals; see the [offline toolkit](RECOVERY_TOOLKIT.md) for currently implemented utilities and their limitations:
 
 1. **The exact active acquisition script** (the November SG_IO version with TDC 4100 retry verification), plus its version/hash and a stable CLI.
 2. **Legacy readers**, explicitly labeled experimental/historical (stream reader and earlier read-only SG_IO variant), explaining where their assumptions differ.
