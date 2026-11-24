@@ -6,6 +6,8 @@ A reproducible, evidence-preserving workflow for reading aging QIC magnetic tape
 
 **Second-drive comparison:** The guide now documents the Tandberg TDC 3660 / TDC 3600-family fixed-512-byte tests and includes [the corresponding firmware analysis](docs/TDC3660_ROM_ANALYSIS.md).
 
+**Latest recovery milestone:** [November 24 recovery update](docs/RECOVERY_MILESTONES_2026-11-24.md) — successful OS/400 V1R1 installation in Solstice, 1989 SAVSYS reconstruction status, mechanical damage observations, and the remaining recovery queue.
+
 ## What this project is
 
 The aim is to preserve **what the drive actually returned**, including incomplete and questionable reads, then construct separately identified recovery candidates supported by the original capture evidence. We do not silently replace damaged data with zeros or claim that a complete-looking tape image is a verified restore.
@@ -32,4 +34,4 @@ This repository documents experiments as well as successful recovery methods. Re
 
 The project does not yet declare a software license; discuss intended licensing before importing or redistributing third-party code.
 
-_Last documentation update: November 22, 2026._
+_Last documentation update: November 24, 2026._
