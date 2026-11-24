@@ -12,16 +12,18 @@ A reproducible, evidence-preserving workflow for reading aging QIC magnetic tape
 
 ## Important: Hercules `tapecopy` modification for the TDC 4100
 
-**Stock Hercules `tapecopy` did not work with our TDC 4100 at its default 2 MiB read size.** A 64 KiB request also failed; a 32 KiB (32,768-byte) request succeeded. To reproduce our earlier physical-tape acquisition workflow, we modified `tapecopy.c` in [SDL Hercules Hyperion](https://github.com/SDL-Hercules-390/hyperion) (historical build `4.9.1.11612-SDL-gee86c4de`):
+**Stock Hercules `tapecopy` did not work with the tested TDC 4100 at its default 2 MiB read size.** A 64 KiB request also failed; a 32 KiB (32,768-byte) request succeeded. To reproduce the earlier physical-tape acquisition workflow, modify `tapecopy.c` in [SDL Hercules Hyperion](https://github.com/SDL-Hercules-390/hyperion) (historical build `4.9.1.11612-SDL-gee86c4de`):
 
 ```diff
 -static BYTE buf[ MAX_TAPE_BLKSIZE ];
 +static BYTE buf[ 32768 ];
 ```
 
-Rebuild `tapecopy` after applying this change. This is a tested workaround for our TDC 4100 setup, not a universal QIC block size. Our newer direct-SG Python reader already uses a 32 KiB request and does **not** require Hercules or this patch. See [software dependencies and provenance](docs/SOFTWARE_DEPENDENCIES.md) for the historical build, shared libraries, conversion utilities and remaining reproducibility details.
+Rebuild `tapecopy` after applying this change. This is a tested workaround for the tested TDC 4100 setup, not a universal QIC block size. The project’s newer direct-SG Python reader already uses a 32 KiB request and does **not** require Hercules or this patch. See [software dependencies and provenance](docs/SOFTWARE_DEPENDENCIES.md) for the historical build, shared libraries, conversion utilities and remaining reproducibility details.
 
 ## What this project is
+
+This repository preserves the methods, experiments, software modifications, and lessons learned during a specific tape recovery effort so that others working with aging magnetic media can evaluate, reproduce, or adapt them where useful. The procedures are documented as observed, including unsuccessful approaches and unresolved limitations; they are not a universal prescription for tape recovery.
 
 The aim is to preserve **what the drive actually returned**, including incomplete and questionable reads, then construct separately identified recovery candidates supported by the original capture evidence. We do not silently replace damaged data with zeros or claim that a complete-looking tape image is a verified restore.
 
