@@ -8,6 +8,8 @@ A reproducible, evidence-preserving workflow for reading aging QIC magnetic tape
 
 **Latest recovery milestone:** [November 24 recovery update](docs/RECOVERY_MILESTONES_2026-11-24.md) — successful OS/400 V1R1 installation in Solstice, 1989 SAVSYS reconstruction status, mechanical damage observations, and the remaining recovery queue.
 
+**Software dependencies:** [Third-party utilities and provenance](docs/SOFTWARE_DEPENDENCIES.md) — Hercules tapecopy, the 32 KiB modification, AWS/TAP conversion, Linux tools and validation environments.
+
 ## What this project is
 
 The aim is to preserve **what the drive actually returned**, including incomplete and questionable reads, then construct separately identified recovery candidates supported by the original capture evidence. We do not silently replace damaged data with zeros or claim that a complete-looking tape image is a verified restore.
