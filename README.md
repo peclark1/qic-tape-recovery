@@ -51,11 +51,11 @@ The principal tested setup uses a Tandberg TDC 4100, Linux generic SCSI, a 32 Ki
 
 ## Offline recovery toolkit
 
-[Usage and limitations](docs/RECOVERY_TOOLKIT.md) — Python 3.11+ capture validation, IBM label inventory, anchored same-tape/cross-tape comparison, conservative derivative reconstruction, a versioned manifest schema and synthetic regression tests. This is an initial implementation; fragment joining and gap recovery remain research work.
+[Usage and limitations](docs/RECOVERY_TOOLKIT.md) — Python 3.11+ capture validation, IBM label inventory, anchored same-tape/cross-tape comparison, conservative derivative reconstruction, a versioned manifest schema and synthetic regression tests. A separate [fragment boundary audit and reblocking tool](docs/FRAGMENT_REBLOCKING.md) supports conservative fixed-size joins and opt-in experimental variable-length joins. Gap recovery remains research work.
 
 ## Current status
 
-The detailed process is documented, and the tested **TDC 4100 direct-SG capture script** is available at [scripts/tape2tap-sg.py](scripts/tape2tap-sg.py). Initial offline validation, inventory, comparison, reconstruction manifests and synthetic tests are now available; full fragment reconciliation and archive-specific validation remain planned. **No original IBM tape images, customer data, or sensitive archive contents are included here.**
+The detailed process is documented, and the tested **TDC 4100 direct-SG capture script** is available at [scripts/tape2tap-sg.py](scripts/tape2tap-sg.py). Initial offline validation, inventory, comparison, reconstruction manifests and synthetic tests are now available; conservative fragment reblocking is now available; gap recovery and broader archive-specific validation remain planned. **No original IBM tape images, customer data, or sensitive archive contents are included here.**
 
 Please distinguish preservation milestones:
 
@@ -73,4 +73,4 @@ This repository documents experiments as well as successful recovery methods. Re
 
 The project does not yet declare a software license; discuss intended licensing before importing or redistributing third-party code.
 
-_Last documentation update: November 24, 2026._
+_Last documentation update: November 27, 2026._
